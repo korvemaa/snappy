@@ -1,0 +1,16 @@
+schema_version = "1.0.0"
+
+# Example of manifest file for a Blender extension
+# Change the values according to your extension
+id = "snappy"
+version = "1.0.0"
+name = "Snappy"
+tagline = "This is a extension to help with grid snapping"
+maintainer = "Jake Korvemaa"
+type = "add-on"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+blender_version_min = "4.2.0"
