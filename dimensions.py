@@ -7,15 +7,63 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 _text_draw_handle = None
 
-def get_bounds_center_world(obj):
+def get_bounds(obj):
     depsgraph = bpy.context.evaluated_depsgraph_get()
     eval_obj = obj.evaluated_get(depsgraph)
 
-    bbox = [eval_obj.matrix_world @ mathutils.Vector(corner)
-            for corner in eval_obj.bound_box]
+    return [eval_obj.matrix_world @ mathutils.Vector(corner) for corner in eval_obj.bound_box]
 
-    world_pos = sum(bbox, mathutils.Vector()) / 8
-    return world_pos
+def view_camera_position(rv3d):
+    return rv3d.view_matrix.inverted().translation
+
+def axis_face_centers_minmax(bounds):
+    xs = [v.x for v in bounds]
+    ys = [v.y for v in bounds]
+    zs = [v.z for v in bounds]
+
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    min_z, max_z = min(zs), max(zs)
+
+    cx = (min_x + max_x) * 0.5
+    cy = (min_y + max_y) * 0.5
+    cz = (min_z + max_z) * 0.5
+
+    return {
+        'X': (
+            mathutils.Vector((min_x, cy, cz)),
+            mathutils.Vector((max_x, cy, cz)),
+        ),
+        'Y': (
+            mathutils.Vector((cx, min_y, cz)),
+            mathutils.Vector((cx, max_y, cz)),
+        ),
+        'Z': (
+            mathutils.Vector((cx, cy, min_z)),
+            mathutils.Vector((cx, cy, max_z)),
+        ),
+    }
+
+def closest_faces_to_camera(bounds, rv3d):
+    cam_pos = view_camera_position(rv3d)
+    faces = axis_face_centers_minmax(bounds)
+
+    result = {}
+    for axis, (a, b) in faces.items():
+        da = (a - cam_pos).length_squared
+        db = (b - cam_pos).length_squared
+        result[axis] = a if da < db else b
+
+    return result
+
+def draw_text(font_id, screen_pos, text, color, font_size):
+    w, h = blf.dimensions(font_id, text)
+
+    blf.size(font_id, font_size)
+    blf.color(font_id, color[0], color[1], color[2], 1)
+    blf.position(font_id, screen_pos.x - w * 0.5, screen_pos.y - h * 0.5, 0)
+
+    blf.draw(font_id, text)
 
 def draw_object_label():
     context = bpy.context
@@ -26,22 +74,27 @@ def draw_object_label():
     if not obj:
         return
 
-    world_pos = get_bounds_center_world(obj)
-    screen_pos = location_3d_to_region_2d(region, rv3d, world_pos)
-
-    if screen_pos is None:
-        return
-
-    font_id = 0
-    blf.size(font_id, 12)
-    blf.color(font_id, 0.1, 1.0, 0.5, 1.0)
-
+    bounds = get_bounds(obj)
+    faces = closest_faces_to_camera(bounds, rv3d)
     dims = obj.dimensions
-    text = f"{dims.x:.2f} × {dims.y:.2f} × {dims.z:.2f}"
 
-    w, h = blf.dimensions(font_id, text)
-    blf.position(font_id, screen_pos.x - w / 2, screen_pos.y - h / 2, 0)
-    blf.draw(font_id, text)
+    ui = bpy.context.preferences.themes[0].user_interface
+    color = {
+        'X': ui.axis_x,
+        'Y': ui.axis_y,
+        'Z': ui.axis_z
+    }
+
+    for axis, world_pos in faces.items():
+        screen_pos = location_3d_to_region_2d(region, rv3d, world_pos)
+        if not screen_pos:
+            continue
+        
+        font_id = 0
+        font_size = 12
+        text = f"{axis.lower()}: {getattr(dims, axis.lower()):.2f}"
+        
+        draw_text(font_id, screen_pos, text, color[axis], font_size);
 
 def enable():
     global _text_draw_handle

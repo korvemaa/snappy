@@ -1,15 +1,22 @@
-bl_info = {
-    "name": "Snappy",
-    "blender": (5, 0, 0),
-    "category": "View3D"
-}
+from . import (dimensions, snapping)
+modules = [dimensions, snapping]
 
-from . import dimensions, snap
+def hot_reload():
+    # Refresh submodules during development
+    import importlib
+    for module in modules:
+        print("Reloading module", module)
+        importlib.reload(module)
+
 
 def register():
-    dimensions.enable()
-    snap.enable()
+    hot_reload()
+    for module in modules:
+        if hasattr(module, "enable"):
+            module.enable()
+
 
 def unregister():
-    dimensions.disable()
-    snap.disable()
+    for module in modules:
+        if hasattr(module, "disable"):
+            module.disable()
