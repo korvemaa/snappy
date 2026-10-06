@@ -3,13 +3,14 @@ import math
 import time
 from mathutils import Vector, Quaternion
 
+speed_state = {"speed": 10}
 class VIEW3D_OT_hold_fly(bpy.types.Operator):
     bl_idname = "view3d.hold_fly"
     bl_label = "Hold Fly Navigation"
     bl_options = {'BLOCKING', 'GRAB_CURSOR'}
 
     _BASE_SPEED = 10
-    _MOUSE_SENSITIVITY = 0.0015
+    _MOUSE_SENSITIVITY = 0.002
     _SPEED_SCALE = 1.2
     _BOOST_MULTIPLIER  = 3.0
     _MAX_PITCH = math.radians(89)
@@ -27,7 +28,7 @@ class VIEW3D_OT_hold_fly(bpy.types.Operator):
             return
 
         self._area.header_text_set(
-            f"Fly Speed: {self._speed:.2f}"
+            f"Fly Speed: {speed_state['speed']:.2f}"
         )
 
     def _call_context_menu(self, context):
@@ -66,9 +67,9 @@ class VIEW3D_OT_hold_fly(bpy.types.Operator):
             self._keys.discard(event.type)
 
         if event.type == 'WHEELUPMOUSE':
-            self._speed *= self._SPEED_SCALE
+            speed_state['speed'] *= self._SPEED_SCALE
         elif event.type == 'WHEELDOWNMOUSE':
-            self._speed /= self._SPEED_SCALE
+            speed_state['speed'] /= self._SPEED_SCALE
 
         # Store mouse look to be used in TIMER event
         if event.type == 'MOUSEMOVE':
@@ -151,7 +152,7 @@ class VIEW3D_OT_hold_fly(bpy.types.Operator):
             target.normalize()
             if self._boost_active():
                 target *= self._BOOST_MULTIPLIER
-            target *= self._speed
+            target *= speed_state['speed']
 
         # Exponential smoothing: velocity eases toward the target each tick.
         t = min(1.0, self._SMOOTHING * dt)
@@ -169,7 +170,6 @@ class VIEW3D_OT_hold_fly(bpy.types.Operator):
 
         self._keys = set()
         self._timer = None
-        self._speed = self._BASE_SPEED
         self._mouse_prev = (event.mouse_region_x, event.mouse_region_y)
         self._mouse_delta = [0, 0]
         self._total_drag = 0
