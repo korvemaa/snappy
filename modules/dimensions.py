@@ -239,12 +239,12 @@ def object_mode_overlay():
         direction = (end - start).normalized()
         start += direction * growth_amount
         end -= direction * growth_amount
-        
-        text = f"{axis.lower()}: {formatted}{unit}"
 
         color = theme[axis]
-        draw.text_3d(label_offset(start, end, cam_pos), text, (1,1,1,1), 12)
+        color = (color[0], color[1], color[2], 1)
         
+        text = f"{axis.lower()}: {formatted}{unit}"
+        draw.text_3d(label_offset(start, end, cam_pos), text, (1,1,1,1), 12)
         draw.lines([start, end], color)
         
 # Registration
