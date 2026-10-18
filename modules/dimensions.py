@@ -134,6 +134,19 @@ def label_offset(start, end, cam, distance = 0.3):
     offset_dir.normalize()
     return middle + offset_dir * distance
 
+TRANSFORM_PREFIXES = (
+    "TRANSFORM_OT_",
+    "MESH_OT_",
+)
+ 
+def is_editing_mesh ():
+    for op in bpy.context.window.modal_operators:
+        for prefix in TRANSFORM_PREFIXES:
+            if op.bl_idname.startswith(prefix):
+                return True
+            
+    return False
+
 def edit_mode_overlay():
     # Edge Length overlay
 
@@ -163,7 +176,8 @@ def edit_mode_overlay():
             select_count += 1
             
             for linked_e in v.link_edges:
-                selected_edges.add(linked_e)
+                if linked_e.select or is_editing_mesh():
+                    selected_edges.add(linked_e)
 
     # Don't draw anything to many things selected
     if select_count >= 8:
