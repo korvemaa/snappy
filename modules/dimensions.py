@@ -134,19 +134,6 @@ def label_offset(start, end, cam, distance = 0.3):
     offset_dir.normalize()
     return middle + offset_dir * distance
 
-TRANSFORM_PREFIXES = (
-    "TRANSFORM_OT_",
-    "MESH_OT_",
-)
- 
-def is_editing_mesh ():
-    for op in bpy.context.window.modal_operators:
-        for prefix in TRANSFORM_PREFIXES:
-            if op.bl_idname.startswith(prefix):
-                return True
-            
-    return False
-
 def edit_mode_overlay():
     # Edge Length overlay
 
@@ -161,19 +148,14 @@ def edit_mode_overlay():
     mesh = obj.data
 
     mw = obj.matrix_world
-
-    is_editing = is_editing_mesh()
-                
     bm = bmesh.from_edit_mesh(mesh)
+                
     selected_edges = set()
-    for e in bm.edges:
-        if e.select:
-            selected_edges.add(e)
-            
-            if is_editing:
-                for v in e.verts:
-                    for linked_e in v.link_edges:
-                        selected_edges.add(linked_e)
+
+    for v in bm.verts:
+        if v.select:
+            for linked_e in v.link_edges:
+                selected_edges.add(linked_e)
 
     for edge in selected_edges:
         v1, v2 = edge.verts
