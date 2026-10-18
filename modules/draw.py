@@ -55,12 +55,17 @@ def lines(points: list[(float, float, float)], color = (1, 1, 0, 1), width = 1):
         shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
         batch = batch_for_shader(shader, 'LINES', {"pos": points})
 
+        gpu.state.blend_set('ALPHA')
+
         shader.bind()
         shader.uniform_float("viewportSize", gpu.state.viewport_get()[2:])
         shader.uniform_float("lineWidth", width)
         shader.uniform_float("color", color)
+        shader.uniform_bool("lineSmooth", True)
 
         batch.draw(shader)
+
+        gpu.state.blend_set('NONE')
     view_instruction(draw)
 
 def box(min, max, color = (1, 1, 0, 1), width = 1):

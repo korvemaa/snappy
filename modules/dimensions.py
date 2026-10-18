@@ -152,10 +152,22 @@ def edit_mode_overlay():
                 
     selected_edges = set()
 
+    ui = bpy.context.preferences.themes[0].view_3d
+    text_color = ui.edge_mode_select
+    edge_color = ui.edge_mode_select
+
+    select_count = 0
+
     for v in bm.verts:
         if v.select:
+            select_count += 1
+            
             for linked_e in v.link_edges:
                 selected_edges.add(linked_e)
+
+    # Don't draw anything to many things selected
+    if select_count >= 8:
+        return
 
     for edge in selected_edges:
         v1, v2 = edge.verts
@@ -176,6 +188,8 @@ def edit_mode_overlay():
             font_size = 10
         
         draw.text_3d(label_offset(start, end, cam_pos, 0.05), f"{formatted}{unit}", color, font_size)
+
+        draw.lines([start, end], (edge_color[0], edge_color[1], edge_color[2], 0.15))
 
 def object_mode_overlay():
     # Dimension overlay   
