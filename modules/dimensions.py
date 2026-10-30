@@ -159,6 +159,8 @@ def edit_mode_overlay():
 
     obj = context.edit_object
     mesh = obj.data
+    if not isinstance(mesh, bpy.types.Mesh):
+        return
 
     mw = obj.matrix_world
     bm = bmesh.from_edit_mesh(mesh)
@@ -169,19 +171,11 @@ def edit_mode_overlay():
     text_color = ui.edge_mode_select
     edge_color = ui.edge_mode_select
 
-    select_count = 0
-
     for v in bm.verts:
         if v.select:
-            select_count += 1
-            
             for linked_e in v.link_edges:
                 if linked_e.select or is_editing_mesh():
                     selected_edges.add(linked_e)
-
-    # Don't draw anything to many things selected
-    if select_count >= 8:
-        return
 
     for edge in selected_edges:
         v1, v2 = edge.verts

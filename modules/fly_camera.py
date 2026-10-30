@@ -35,6 +35,13 @@ class VIEW3D_OT_hold_fly(bpy.types.Operator):
         mode_to_menu = {
             'OBJECT': 'VIEW3D_MT_object_context_menu',
             'EDIT_MESH': 'VIEW3D_MT_edit_mesh_context_menu',
+            'EDIT_CURVE': 'VIEW3D_MT_edit_curve_context_menu',
+            'EDIT_TEXT': 'VIEW3D_MT_edit_font_context_menu',
+            'EDIT_SURFACE': 'VIEW3D_MT_edit_surface_context_menu',
+            'EDIT_ARMATURE': 'VIEW3D_MT_armature_context_menu',
+            'POSE': 'VIEW3D_MT_pose_context_menu',
+            'EDIT_LATTICE': 'VIEW3D_MT_edit_lattice_context_menu',
+            'EDIT_METABALL': 'VIEW3D_MT_edit_metaball_context_menu',
         }
 
         menu_name = mode_to_menu.get(context.mode, 'VIEW3D_MT_object_context_menu')
@@ -205,20 +212,16 @@ def enable():
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
 
-    if kc:
-        km = kc.keymaps.new(name="Object Mode", space_type='EMPTY')
-        addon_keymaps.append((km, km.keymap_items.new(
-            VIEW3D_OT_hold_fly.bl_idname,
-            type='RIGHTMOUSE',
-            value='PRESS'
-        )))
+    targets = ["Object Mode", "Mesh", "Curve", "Font", "Lattice"]
 
-        km = kc.keymaps.new(name="Mesh", space_type='EMPTY')
-        addon_keymaps.append((km, km.keymap_items.new(
-            VIEW3D_OT_hold_fly.bl_idname,
-            type='RIGHTMOUSE',
-            value='PRESS'
-        )))
+    if kc:
+        for target in targets:
+            km = kc.keymaps.new(name=target, space_type='EMPTY')
+            addon_keymaps.append((km, km.keymap_items.new(
+                VIEW3D_OT_hold_fly.bl_idname,
+                type='RIGHTMOUSE',
+                value='PRESS'
+            )))
 
 def disable():
     for km, kmi in addon_keymaps:
